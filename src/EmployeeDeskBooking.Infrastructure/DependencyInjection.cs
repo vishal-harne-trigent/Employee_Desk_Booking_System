@@ -1,4 +1,7 @@
+using EmployeeDeskBooking.Application.Auth;
 using EmployeeDeskBooking.Infrastructure.Data;
+using EmployeeDeskBooking.Infrastructure.Repositories;
+using EmployeeDeskBooking.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +16,9 @@ public static class DependencyInjection
     {
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddSingleton<IPasswordVerifier, PasswordVerifier>();
 
         return services;
     }
