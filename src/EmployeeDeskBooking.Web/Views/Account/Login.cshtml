@@ -1,0 +1,49 @@
+@model EmployeeDeskBooking.Web.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Sign in";
+    Layout = "_LoginLayout";
+}
+
+<div class="login-screen">
+    <div class="login-card">
+        <img class="brand-logo" src="~/images/desk-booking-logo.png" alt="Desk Booking" />
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <div class="alert alert-error" role="alert">
+                <span aria-hidden="true">!</span>
+                <span>@Model.ErrorMessage</span>
+            </div>
+        }
+        <h2>Welcome back</h2>
+        <p class="sub">Sign in to manage your desk bookings</p>
+        <form asp-action="Login" method="post" id="login-form" novalidate>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-error" role="alert"></div>
+            <div class="field">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" type="email" autocomplete="username" placeholder="you@company.com" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" type="password" autocomplete="current-password" placeholder="Enter your password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary" id="sign-in-button">Sign in</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('login-form')?.addEventListener('submit', function () {
+            var button = document.getElementById('sign-in-button');
+            if (!button || button.disabled) {
+                return;
+            }
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner" aria-hidden="true"></span>Signing in…';
+        });
+    </script>
+}

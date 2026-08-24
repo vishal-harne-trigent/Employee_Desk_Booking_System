@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using EmployeeDeskBooking.Application.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using EmployeeDeskBooking.Web.Models;
 
@@ -13,9 +15,20 @@ public class HomeController : Controller
         _logger = logger;
     }
 
+    [AllowAnonymous]
     public IActionResult Index()
     {
-        return View();
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            if (User.IsInRole(AuthRoles.Admin))
+            {
+                return RedirectToAction("Index", "Bookings", new { area = "Admin" });
+            }
+
+            return RedirectToAction("Index", "Book");
+        }
+
+        return RedirectToAction("Login", "Account");
     }
 
     public IActionResult Privacy()
