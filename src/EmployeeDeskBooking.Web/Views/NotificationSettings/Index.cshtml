@@ -1,0 +1,87 @@
+@model EmployeeDeskBooking.Web.Models.NotificationSettingsViewModel
+@{
+    ViewData["Title"] = "Notification settings";
+}
+
+<div class="page-head">
+    <h2>Notification settings</h2>
+    <p>Manage how you hear about booking updates.</p>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+{
+    <div class="alert alert-success" role="status">
+        <span aria-hidden="true">✓</span>
+        <span>@Model.SuccessMessage</span>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-error" role="alert">
+        <span aria-hidden="true">!</span>
+        <span>@Model.ErrorMessage</span>
+    </div>
+}
+
+<div class="card settings-card">
+    <h3>Email (automatic)</h3>
+    <p class="settings-copy">
+        Confirmation, cancellation, and day-before reminder emails are always sent to your account email.
+    </p>
+</div>
+
+<div class="card settings-card">
+    <h3>Browser push (optional)</h3>
+    <p class="settings-copy">
+        Status:
+        <strong id="push-status-label">@(Model.PushOptIn ? "Enabled" : "Disabled")</strong>
+    </p>
+
+    @if (!Model.PushConfigured)
+    {
+        <div class="alert alert-info" role="status">
+            Browser push is not configured on this server. Email notifications still work.
+        </div>
+    }
+    else
+    {
+        <div id="push-unsupported" class="alert alert-info" role="status" hidden>
+            This browser does not support push notifications, or permission was denied. Email notifications still work.
+        </div>
+
+        <div class="settings-actions">
+            @if (Model.PushOptIn)
+            {
+                <form asp-action="DisablePush" method="post" class="inline-form">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-secondary">Disable push</button>
+                </form>
+            }
+            else
+            {
+                <form id="enable-push-form" asp-action="EnablePush" method="post" class="inline-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="subscription-json" name="subscriptionJson" value="" />
+                    <button type="button" id="enable-push-button" class="btn btn-primary">Enable push</button>
+                </form>
+            }
+        </div>
+    }
+</div>
+
+<p><a class="link-action" asp-controller="MyBookings" asp-action="Index">← Back to My bookings</a></p>
+
+@section Scripts {
+    <script>
+        window.deskBookingPush = {
+            vapidPublicKey: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VapidPublicKey ?? string.Empty)),
+            enableFormId: "enable-push-form",
+            subscriptionInputId: "subscription-json",
+            enableButtonId: "enable-push-button",
+            unsupportedId: "push-unsupported",
+            statusLabelId: "push-status-label"
+        };
+    </script>
+    <script src="~/js/push-notifications.js" asp-append-version="true"></script>
+}

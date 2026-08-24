@@ -22,6 +22,162 @@ namespace EmployeeDeskBooking.Infrastructure.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("EmployeeDeskBooking.Domain.Entities.Booking", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("BookingDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CancelledById")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("DeskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingDate", "Status");
+
+                    b.HasIndex("DeskId", "BookingDate")
+                        .IsUnique()
+                        .HasFilter("[Status] = 0");
+
+                    b.HasIndex("UserId", "BookingDate")
+                        .IsUnique()
+                        .HasFilter("[Status] = 0");
+
+                    b.ToTable("Bookings", (string)null);
+                });
+
+            modelBuilder.Entity("EmployeeDeskBooking.Domain.Entities.BookingReminder", b =>
+                {
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("BookingId");
+
+                    b.ToTable("BookingReminders", (string)null);
+                });
+
+            modelBuilder.Entity("EmployeeDeskBooking.Domain.Entities.Desk", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DeskNumber")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("DeskNumberNormalized")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeskNumberNormalized")
+                        .IsUnique();
+
+                    b.ToTable("Desks", (string)null);
+                });
+
+            modelBuilder.Entity("EmployeeDeskBooking.Domain.Entities.EmailDeliveryLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<byte>("EmailType")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Recipient")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("tinyint");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("EmailDeliveryLogs", (string)null);
+                });
+
+            modelBuilder.Entity("EmployeeDeskBooking.Domain.Entities.NotificationPreference", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("PushOptIn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("PushSubscription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("NotificationPreferences", (string)null);
+                });
+
             modelBuilder.Entity("EmployeeDeskBooking.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -68,6 +224,64 @@ namespace EmployeeDeskBooking.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("EmployeeDeskBooking.Domain.Entities.Booking", b =>
+                {
+                    b.HasOne("EmployeeDeskBooking.Domain.Entities.Desk", "Desk")
+                        .WithMany()
+                        .HasForeignKey("DeskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EmployeeDeskBooking.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Desk");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("EmployeeDeskBooking.Domain.Entities.BookingReminder", b =>
+                {
+                    b.HasOne("EmployeeDeskBooking.Domain.Entities.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+                });
+
+            modelBuilder.Entity("EmployeeDeskBooking.Domain.Entities.EmailDeliveryLog", b =>
+                {
+                    b.HasOne("EmployeeDeskBooking.Domain.Entities.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("EmployeeDeskBooking.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("EmployeeDeskBooking.Domain.Entities.NotificationPreference", b =>
+                {
+                    b.HasOne("EmployeeDeskBooking.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

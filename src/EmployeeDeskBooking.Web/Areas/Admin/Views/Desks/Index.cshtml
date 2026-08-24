@@ -1,0 +1,176 @@
+@model EmployeeDeskBooking.Web.Models.ManageDesksViewModel
+@using EmployeeDeskBooking.Domain.Enums
+@{
+    ViewData["Title"] = "Manage desks";
+    var pendingDeactivate = Model.PendingDeactivateDesk;
+}
+
+<div class="page-head page-head-actions">
+    <div>
+        <h2>Manage desks</h2>
+        <p>Add, edit, and activate or deactivate desk inventory.</p>
+    </div>
+    <form asp-action="StartAdd" method="post" class="inline-form">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-primary">+ Add desk</button>
+    </form>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+{
+    <div class="alert alert-success" role="status">
+        <span aria-hidden="true">✓</span>
+        <span>@Model.SuccessMessage</span>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-error" role="alert">
+        <span aria-hidden="true">!</span>
+        <span>@Model.ErrorMessage</span>
+        @if (Model.ErrorMessage.Contains("All bookings", StringComparison.OrdinalIgnoreCase))
+        {
+            <span> <a class="link-action" asp-area="Admin" asp-controller="Bookings" asp-action="Index">Go to All bookings →</a></span>
+        }
+    </div>
+}
+
+@if (Model.Desks.Count == 0)
+{
+    <div class="empty">
+        <p>No desks in inventory yet.</p>
+        <form asp-action="StartAdd" method="post" class="inline-form">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="link-action">Add your first desk →</button>
+        </form>
+    </div>
+}
+else
+{
+    <div class="card table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Desk</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var desk in Model.Desks)
+                {
+                    <tr>
+                        <td class="desk-id">@desk.DeskNumber</td>
+                        <td>
+                            <span class="pill @ManageDesksViewModel.StatusCssClass(desk.Status)">
+                                @ManageDesksViewModel.StatusLabel(desk.Status)
+                            </span>
+                        </td>
+                        <td class="table-actions">
+                            <form asp-action="StartEdit" method="post" class="inline-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="deskId" value="@desk.DeskId" />
+                                <button type="submit" class="btn btn-secondary btn-sm">Edit</button>
+                            </form>
+                            @if (desk.Status == DeskStatus.Active)
+                            {
+                                if (desk.CanDeactivate)
+                                {
+                                    <form asp-action="StartDeactivate" method="post" class="inline-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="deskId" value="@desk.DeskId" />
+                                        <button type="submit" class="btn btn-danger btn-sm">Deactivate</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="AttemptDeactivate" method="post" class="inline-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="deskId" value="@desk.DeskId" />
+                                        <button type="submit" class="btn btn-danger btn-sm">Deactivate</button>
+                                    </form>
+                                }
+                            }
+                            else
+                            {
+                                <form asp-action="Activate" method="post" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="deskId" value="@desk.DeskId" />
+                                    <button type="submit" class="btn btn-primary btn-sm">Activate</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.ShowAddModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal" role="dialog" aria-labelledby="add-desk-title" aria-modal="true">
+            <h3 id="add-desk-title">Add desk</h3>
+            <form asp-action="CreateDesk" method="post">
+                @Html.AntiForgeryToken()
+                <div class="field">
+                    <label for="addDeskNumber">Desk number</label>
+                    <input id="addDeskNumber" name="deskNumber" type="text" maxlength="32" value="@Model.AddDeskNumber" required />
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.FieldError))
+                {
+                    <div class="alert alert-error" role="alert">@Model.FieldError</div>
+                }
+                <div class="modal-actions">
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@if (Model.EditDeskId.HasValue)
+{
+    <div class="modal-backdrop">
+        <div class="modal" role="dialog" aria-labelledby="edit-desk-title" aria-modal="true">
+            <h3 id="edit-desk-title">Edit desk</h3>
+            <form asp-action="SaveEdit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="deskId" value="@Model.EditDeskId" />
+                <div class="field">
+                    <label for="editDeskNumber">Desk number</label>
+                    <input id="editDeskNumber" name="deskNumber" type="text" maxlength="32" value="@Model.EditDeskNumber" required />
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.FieldError))
+                {
+                    <div class="alert alert-error" role="alert">@Model.FieldError</div>
+                }
+                <div class="modal-actions">
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@if (pendingDeactivate is not null && pendingDeactivate.CanDeactivate)
+{
+    <div class="modal-backdrop">
+        <div class="modal" role="dialog" aria-labelledby="deactivate-desk-title" aria-modal="true">
+            <h3 id="deactivate-desk-title">Deactivate desk?</h3>
+            <p>Desk <strong>@pendingDeactivate.DeskNumber</strong> will be hidden from employee booking.</p>
+            <div class="modal-actions">
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                <form asp-action="ConfirmDeactivate" method="post" class="inline-form flex-1">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="deskId" value="@pendingDeactivate.DeskId" />
+                    <button type="submit" class="btn btn-primary w-100">Confirm deactivate</button>
+                </form>
+            </div>
+        </div>
+    </div>
+}

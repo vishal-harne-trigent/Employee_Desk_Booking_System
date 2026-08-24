@@ -1,8 +1,168 @@
+@model EmployeeDeskBooking.Web.Models.AdminBookingsViewModel
 @{
     ViewData["Title"] = "All bookings";
+    var pending = Model.PendingCancelBooking;
+    var filterDateValue = Model.FilterDate?.ToString("yyyy-MM-dd") ?? string.Empty;
 }
 
 <div class="page-head">
     <h2>All bookings</h2>
-    <p>Admin booking management will be available in US-004.</p>
+    <p>View and manage desk reservations across all employees.</p>
 </div>
+
+@if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+{
+    <div class="alert alert-success" role="status">
+        <span aria-hidden="true">✓</span>
+        <span>@Model.SuccessMessage</span>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-error" role="alert">
+        <span aria-hidden="true">!</span>
+        <span>@Model.ErrorMessage</span>
+    </div>
+}
+
+<div class="card filter-card">
+    <form asp-action="ApplyFilters" method="post" class="filter-row">
+        @Html.AntiForgeryToken()
+        <div>
+            <label for="filterDate">Date</label>
+            <input id="filterDate" name="filterDate" type="date" value="@filterDateValue" />
+        </div>
+        <div>
+            <label for="filterStatus">Status</label>
+            <select id="filterStatus" name="filterStatus">
+                @if (Model.FilterStatus == "All")
+                {
+                    <option value="All" selected>All</option>
+                }
+                else
+                {
+                    <option value="All">All</option>
+                }
+                @if (Model.FilterStatus == "Confirmed")
+                {
+                    <option value="Confirmed" selected>Confirmed</option>
+                }
+                else
+                {
+                    <option value="Confirmed">Confirmed</option>
+                }
+                @if (Model.FilterStatus == "Cancelled")
+                {
+                    <option value="Cancelled" selected>Cancelled</option>
+                }
+                else
+                {
+                    <option value="Cancelled">Cancelled</option>
+                }
+                @if (Model.FilterStatus == "Completed")
+                {
+                    <option value="Completed" selected>Completed</option>
+                }
+                else
+                {
+                    <option value="Completed">Completed</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Apply</button>
+        @if (Model.HasActiveFilters)
+        {
+            <button type="submit" formaction="@Url.Action("ClearFilters")" formmethod="post" class="btn btn-secondary">
+                Clear filters
+            </button>
+        }
+    </form>
+</div>
+
+@if (Model.Bookings.Count == 0)
+{
+    <div class="empty">
+        @if (Model.HasActiveFilters)
+        {
+            <p>No bookings match these filters.</p>
+            <form asp-action="ClearFilters" method="post" class="inline-form">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="link-action">Clear filters →</button>
+            </form>
+        }
+        else
+        {
+            <p>No bookings yet.</p>
+        }
+    </div>
+}
+else
+{
+    <div class="card table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Employee</th>
+                    <th>Desk</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model.Bookings)
+                {
+                    <tr>
+                        <td>@booking.BookingDate.ToString("ddd, d MMM yyyy")</td>
+                        <td>@booking.EmployeeEmail</td>
+                        <td class="desk-id">@booking.DeskNumber</td>
+                        <td>
+                            <span class="pill @AdminBookingsViewModel.StatusCssClass(booking.Status)">
+                                @AdminBookingsViewModel.StatusLabel(booking.Status)
+                            </span>
+                        </td>
+                        <td>
+                            @if (booking.CanCancel)
+                            {
+                                <form asp-action="StartCancel" method="post" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="bookingId" value="@booking.BookingId" />
+                                    <input type="hidden" name="filterDate" value="@filterDateValue" />
+                                    <input type="hidden" name="filterStatus" value="@Model.FilterStatus" />
+                                    <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (pending is not null && pending.CanCancel)
+{
+    <div class="modal-backdrop">
+        <div class="modal" role="dialog" aria-labelledby="admin-cancel-title" aria-modal="true">
+            <h3 id="admin-cancel-title">Cancel booking on behalf of employee?</h3>
+            <p>
+                <strong>@pending.EmployeeEmail</strong> — desk <strong>@pending.DeskNumber</strong>
+                on <strong>@pending.BookingDate.ToString("ddd, d MMM yyyy")</strong>
+            </p>
+            <div class="modal-actions">
+                <a asp-action="Index"
+                   asp-route-filterDate="@Model.FilterDate"
+                   asp-route-filterStatus="@Model.FilterStatus"
+                   class="btn btn-secondary">Keep booking</a>
+                <form asp-action="ConfirmCancel" method="post" class="inline-form flex-1">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="bookingId" value="@pending.BookingId" />
+                    <input type="hidden" name="filterDate" value="@filterDateValue" />
+                    <input type="hidden" name="filterStatus" value="@Model.FilterStatus" />
+                    <button type="submit" class="btn btn-primary w-100">Confirm cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+}

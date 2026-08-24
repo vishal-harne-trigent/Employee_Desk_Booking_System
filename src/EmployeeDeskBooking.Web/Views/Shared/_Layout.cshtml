@@ -18,10 +18,13 @@
             <nav aria-label="Main">
                 @if (User.IsInRole(EmployeeDeskBooking.Application.Auth.AuthRoles.Employee))
                 {
-                    <a asp-controller="Book" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Book" ? "active" : null)">Book desk</a>
+                    <a asp-controller="Book" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Book" ? "active" : null)">Desk Availability</a>
+                    <a asp-controller="MyBookings" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "MyBookings" ? "active" : null)">My Bookings</a>
                 }
                 @if (User.IsInRole(EmployeeDeskBooking.Application.Auth.AuthRoles.Admin))
                 {
+                    <a asp-area="Admin" asp-controller="Desks" asp-action="Index" class="@(ViewContext.RouteData.Values["area"]?.ToString() == "Admin" && ViewContext.RouteData.Values["controller"]?.ToString() == "Desks" ? "active" : null)">Desks</a>
+                    <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="@(ViewContext.RouteData.Values["area"]?.ToString() == "Admin" && ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : null)">Users</a>
                     <a asp-area="Admin" asp-controller="Bookings" asp-action="Index" class="@(ViewContext.RouteData.Values["area"]?.ToString() == "Admin" && ViewContext.RouteData.Values["controller"]?.ToString() == "Bookings" ? "active" : null)">All bookings</a>
                 }
             </nav>

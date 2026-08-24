@@ -1,0 +1,92 @@
+@model EmployeeDeskBooking.Web.Models.MyBookingsViewModel
+@using EmployeeDeskBooking.Domain.Enums
+@{
+    ViewData["Title"] = "My bookings";
+    var pending = Model.PendingCancelBooking;
+}
+
+<div class="page-head">
+    <h2>My bookings</h2>
+    <p>Your upcoming and past desk reservations. <a class="link-action" asp-controller="NotificationSettings" asp-action="Index">Notification settings</a></p>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+{
+    <div class="alert alert-success" role="status">
+        <span aria-hidden="true">✓</span>
+        <span>@Model.SuccessMessage</span>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-error" role="alert">
+        <span aria-hidden="true">!</span>
+        <span>@Model.ErrorMessage</span>
+    </div>
+}
+
+@if (Model.Bookings.Count == 0)
+{
+    <div class="empty">
+        <p>No bookings yet.</p>
+        <p><a class="link-action" asp-controller="Book" asp-action="Index">Book a desk →</a></p>
+    </div>
+}
+else
+{
+    <div class="card table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Desk</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model.Bookings)
+                {
+                    <tr>
+                        <td class="desk-id">@booking.DeskNumber</td>
+                        <td>@booking.BookingDate.ToString("ddd, d MMM yyyy")</td>
+                        <td>
+                            <span class="pill @MyBookingsViewModel.StatusCssClass(booking.Status)">
+                                @MyBookingsViewModel.StatusLabel(booking.Status)
+                            </span>
+                        </td>
+                        <td>
+                            @if (booking.CanCancel)
+                            {
+                                <form asp-action="StartCancel" method="post" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="bookingId" value="@booking.BookingId" />
+                                    <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (pending is not null && pending.CanCancel)
+{
+    <div class="modal-backdrop">
+        <div class="modal" role="dialog" aria-labelledby="cancel-title" aria-modal="true">
+            <h3 id="cancel-title">Cancel booking?</h3>
+            <p>Desk <strong>@pending.DeskNumber</strong> on <strong>@pending.BookingDate.ToString("ddd, d MMM yyyy")</strong></p>
+            <div class="modal-actions">
+                <a asp-action="Index" class="btn btn-secondary">Keep booking</a>
+                <form asp-action="ConfirmCancel" method="post" class="inline-form flex-1">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="bookingId" value="@pending.BookingId" />
+                    <button type="submit" class="btn btn-primary w-100">Confirm cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+}

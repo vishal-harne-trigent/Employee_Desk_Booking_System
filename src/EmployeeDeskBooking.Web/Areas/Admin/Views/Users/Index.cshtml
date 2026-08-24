@@ -1,0 +1,217 @@
+@model EmployeeDeskBooking.Web.Models.ManageUsersViewModel
+@using EmployeeDeskBooking.Application.Auth
+@using EmployeeDeskBooking.Domain.Enums
+@{
+    ViewData["Title"] = "Manage users";
+    var pendingDeactivate = Model.PendingDeactivateUser;
+}
+
+<div class="page-head page-head-actions">
+    <div>
+        <h2>Manage users</h2>
+        <p>Create and maintain employee and admin accounts.</p>
+    </div>
+    <form asp-action="StartAdd" method="post" class="inline-form">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-primary">+ Add user</button>
+    </form>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+{
+    <div class="alert alert-success" role="status">
+        <span aria-hidden="true">✓</span>
+        <span>@Model.SuccessMessage</span>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-error" role="alert">
+        <span aria-hidden="true">!</span>
+        <span>@Model.ErrorMessage</span>
+    </div>
+}
+
+@if (Model.Users.Count == 0)
+{
+    <div class="empty">
+        <p>No user accounts yet.</p>
+    </div>
+}
+else
+{
+    <div class="card table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td>@user.Name</td>
+                        <td>@user.Email</td>
+                        <td>@ManageUsersViewModel.RoleLabel(user.Role)</td>
+                        <td>
+                            <span class="pill @ManageUsersViewModel.StatusCssClass(user.IsActive)">
+                                @ManageUsersViewModel.StatusLabel(user.IsActive)
+                            </span>
+                        </td>
+                        <td class="table-actions">
+                            <form asp-action="StartEdit" method="post" class="inline-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@user.UserId" />
+                                <button type="submit" class="btn btn-secondary btn-sm">Edit</button>
+                            </form>
+                            <form asp-action="ResetPassword" method="post" class="inline-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@user.UserId" />
+                                <button type="submit" class="btn btn-secondary btn-sm">Reset password</button>
+                            </form>
+                            @if (user.IsActive && !(user.IsLastActiveAdmin))
+                            {
+                                <form asp-action="StartDeactivate" method="post" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="userId" value="@user.UserId" />
+                                    <button type="submit" class="btn btn-danger btn-sm">Deactivate</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.ShowAddModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal" role="dialog" aria-labelledby="add-user-title" aria-modal="true">
+            <h3 id="add-user-title">Add user</h3>
+            <form asp-action="CreateUser" method="post">
+                @Html.AntiForgeryToken()
+                <div class="field">
+                    <label for="addName">Name</label>
+                    <input id="addName" name="name" type="text" maxlength="200" value="@Model.AddName" required />
+                </div>
+                <div class="field">
+                    <label for="addEmail">Email</label>
+                    <input id="addEmail" name="email" type="email" maxlength="320" value="@Model.AddEmail" required />
+                </div>
+                <div class="field">
+                    <label for="addRole">Role</label>
+                    <select id="addRole" name="role">
+                        @if (Model.AddRole == AuthRoles.Admin)
+                        {
+                            <option value="@AuthRoles.Employee">Employee</option>
+                            <option value="@AuthRoles.Admin" selected>Admin</option>
+                        }
+                        else
+                        {
+                            <option value="@AuthRoles.Employee" selected>Employee</option>
+                            <option value="@AuthRoles.Admin">Admin</option>
+                        }
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="addPassword">Initial password</label>
+                    <input id="addPassword" name="password" type="password" minlength="8" value="@Model.AddPassword" required />
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.FieldError))
+                {
+                    <div class="alert alert-error" role="alert">@Model.FieldError</div>
+                }
+                <div class="modal-actions">
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@if (Model.EditUserId.HasValue)
+{
+    <div class="modal-backdrop">
+        <div class="modal" role="dialog" aria-labelledby="edit-user-title" aria-modal="true">
+            <h3 id="edit-user-title">Edit user</h3>
+            <form asp-action="SaveEdit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="userId" value="@Model.EditUserId" />
+                <div class="field">
+                    <label for="editName">Name</label>
+                    <input id="editName" name="name" type="text" maxlength="200" value="@Model.EditName" required />
+                </div>
+                <div class="field">
+                    <label for="editEmail">Email</label>
+                    <input id="editEmail" name="email" type="email" maxlength="320" value="@Model.EditEmail" required />
+                </div>
+                <div class="field">
+                    <label for="editRole">Role</label>
+                    <select id="editRole" name="role">
+                        @if (Model.EditRole == AuthRoles.Admin)
+                        {
+                            <option value="@AuthRoles.Employee">Employee</option>
+                            <option value="@AuthRoles.Admin" selected>Admin</option>
+                        }
+                        else
+                        {
+                            <option value="@AuthRoles.Employee" selected>Employee</option>
+                            <option value="@AuthRoles.Admin">Admin</option>
+                        }
+                    </select>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.FieldError))
+                {
+                    <div class="alert alert-error" role="alert">@Model.FieldError</div>
+                }
+                <div class="modal-actions">
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@if (pendingDeactivate is not null)
+{
+    <div class="modal-backdrop">
+        <div class="modal" role="dialog" aria-labelledby="deactivate-user-title" aria-modal="true">
+            <h3 id="deactivate-user-title">Deactivate user?</h3>
+            <p><strong>@pendingDeactivate.Name</strong> will no longer be able to sign in.</p>
+            <div class="modal-actions">
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                <form asp-action="ConfirmDeactivate" method="post" class="inline-form flex-1">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="userId" value="@pendingDeactivate.UserId" />
+                    <button type="submit" class="btn btn-primary w-100">Confirm deactivate</button>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ResetPasswordPlaintext))
+{
+    <div class="modal-backdrop">
+        <div class="modal" role="dialog" aria-labelledby="reset-password-title" aria-modal="true">
+            <h3 id="reset-password-title">New password for @Model.ResetPasswordForName</h3>
+            <p>Copy this password now. It will not be shown again.</p>
+            <div class="password-reveal" role="status">
+                <code id="reset-password-value">@Model.ResetPasswordPlaintext</code>
+            </div>
+            <div class="modal-actions">
+                <a asp-action="Index" class="btn btn-primary">Done</a>
+            </div>
+        </div>
+    </div>
+}
