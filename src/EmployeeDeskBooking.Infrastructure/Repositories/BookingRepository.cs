@@ -177,6 +177,15 @@ public sealed class BookingRepository(AppDbContext dbContext) : IBookingReposito
                 booking.Status == BookingStatus.Confirmed)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<Booking>> GetConfirmedBookingsBeforeDateAsync(
+        DateOnly beforeDate,
+        CancellationToken cancellationToken = default) =>
+        await dbContext.Bookings
+            .Where(booking =>
+                booking.Status == BookingStatus.Confirmed &&
+                booking.BookingDate < beforeDate)
+            .ToListAsync(cancellationToken);
+
     public async Task<bool> TrySaveChangesAsync(CancellationToken cancellationToken = default)
     {
         try

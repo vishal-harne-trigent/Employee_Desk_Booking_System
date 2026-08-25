@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddBookingReminderJob();
+builder.Services.AddBookingCompletionJob();
 builder.Services.AddControllersWithViews();
 
 builder.Services

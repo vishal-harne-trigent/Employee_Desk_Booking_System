@@ -153,10 +153,9 @@ public static class DbInitializer
                 UserId = employee.Id,
                 DeskId = deskB01.Id,
                 BookingDate = pastDate,
-                Status = BookingStatus.Completed,
-                CompletedAt = now,
+                Status = BookingStatus.Confirmed,
                 CreatedAt = now.AddDays(-6),
-                UpdatedAt = now,
+                UpdatedAt = now.AddDays(-6),
             },
             new Booking
             {

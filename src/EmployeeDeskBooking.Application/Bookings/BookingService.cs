@@ -227,4 +227,28 @@ public sealed class BookingService(
         await bookingNotificationService.SendCancellationAsync(bookingId, cancellationToken);
         return CancelBookingResult.Success();
     }
+
+    public async Task<int> CompletePastBookingsAsync(CancellationToken cancellationToken = default)
+    {
+        var today = officeClock.Today;
+        var bookings = await bookingRepository.GetConfirmedBookingsBeforeDateAsync(
+            today,
+            cancellationToken);
+
+        if (bookings.Count == 0)
+        {
+            return 0;
+        }
+
+        var now = officeClock.Now;
+        foreach (var booking in bookings)
+        {
+            booking.Status = BookingStatus.Completed;
+            booking.CompletedAt = now;
+            booking.UpdatedAt = now;
+        }
+
+        await bookingRepository.TrySaveChangesAsync(cancellationToken);
+        return bookings.Count;
+    }
 }
