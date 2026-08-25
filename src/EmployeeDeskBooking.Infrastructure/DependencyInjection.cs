@@ -58,4 +58,10 @@ public static class DependencyInjection
         services.AddHostedService<ReminderEmailHostedService>();
         return services;
     }
+
+    public static IServiceCollection AddBookingCompletionJob(this IServiceCollection services)
+    {
+        services.AddHostedService<CompletePastBookingsHostedService>();
+        return services;
+    }
 }

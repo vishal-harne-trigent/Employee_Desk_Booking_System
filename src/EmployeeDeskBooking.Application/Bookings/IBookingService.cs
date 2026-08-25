@@ -30,4 +30,6 @@ public interface IBookingService
         Guid adminUserId,
         Guid bookingId,
         CancellationToken cancellationToken = default);
+
+    Task<int> CompletePastBookingsAsync(CancellationToken cancellationToken = default);
 }
