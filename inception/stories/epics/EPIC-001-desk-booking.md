@@ -7,7 +7,7 @@
 | **Traces to**    | BRD-001, SRS-001                                                                 |
 | **Goal**         | Hybrid employees book desks; admins oversee bookings, desks, and users           |
 | **Stories**      | US-001 … US-009                                                                  |
-| **Delivery plan**| `inception/stories/delivery-plan-EPIC-001.md` (locked 2026-08-17)                |
+| **Delivery plan**| `inception/stories/delivery-plan-EPIC-001.md` (locked 2026-08-27)                |
 
 ## Scope
 
